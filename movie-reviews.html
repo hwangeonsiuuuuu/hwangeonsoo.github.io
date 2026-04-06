@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>한줄평 — 영화 리뷰</title>
+
+  <!-- Google Fonts: 제목용 Playfair Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ───────────────────────────────────────────
+       CSS 변수 — 미니멀 팔레트
+    ─────────────────────────────────────────── */
+    :root {
+      --bg:         #ffffff;
+      --text:       #1a1a1a;        /* 순수 검정보다 약간 부드럽게 */
+      --text-sub:   #555555;        /* 보조 텍스트 */
+      --muted:      #aaaaaa;        /* 플레이스홀더·장식 */
+      --border:     #ebebeb;        /* 매우 연한 구분선 */
+      --border-focus: #c0c0c0;      /* 포커스 시 밑줄 */
+      --btn-bg:     #f0f0f0;        /* 연회색 버튼 */
+      --btn-txt:    #1a1a1a;
+      --btn-hover:  #e4e4e4;
+      --btn-active: #d8d8d8;
+      --radius:     6px;
+      --transition: 0.15s ease;
+    }
+
+    /* ───────────────────────────────────────────
+       전역 리셋
+    ─────────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 400;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ───────────────────────────────────────────
+       헤더 — 절제된 타이틀
+    ─────────────────────────────────────────── */
+    header {
+      padding: 48px 24px 32px;
+      text-align: center;
+    }
+
+    header .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.9rem, 5vw, 2.8rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--text);
+    }
+
+    header h1 em {
+      font-style: italic;
+    }
+
+    header p.subtitle {
+      margin-top: 8px;
+      font-size: 0.875rem;
+      color: var(--text);
+    }
+
+    /* ───────────────────────────────────────────
+       메인 컨테이너
+    ─────────────────────────────────────────── */
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 24px 100px;
+    }
+
+    /* ───────────────────────────────────────────
+       영화 추가 폼 — sticky 고정
+    ─────────────────────────────────────────── */
+    .add-movie-section {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg);
+      padding: 18px 0 14px;
+      margin-bottom: 28px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* 스크롤 시 극히 옅은 그림자로만 구분 */
+    .add-movie-section.scrolled {
+      box-shadow: 0 1px 0 var(--border);
+    }
+
+    .add-movie-section .input-wrap {
+      flex: 1;
+    }
+
+    .add-movie-section label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    /* ───────────────────────────────────────────
+       입력창 — 밑줄 스타일
+    ─────────────────────────────────────────── */
+    .underline-input {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      padding: 6px 0;
+      font-size: 0.9375rem;
+      font-family: inherit;
+      font-weight: 400;
+      background: transparent;
+      color: var(--text);
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    .underline-input::placeholder {
+      color: var(--muted);
+    }
+
+    .underline-input:focus {
+      border-bottom-color: var(--border-focus);
+    }
+
+    /* type="text"로 두고 점(●)으로만 보이게 — password 필드 IME 영어 고정 회피 */
+    .input-mask-password {
+      -webkit-text-security: disc;
+    }
+
+    /* ───────────────────────────────────────────
+       버튼 — 덜 강조된 연회색 스타일
+    ─────────────────────────────────────────── */
+    .btn {
+      background: var(--btn-bg);
+      color: var(--btn-txt);
+      border: none;
+      padding: 7px 16px;
+      font-size: 0.8125rem;
+      font-family: inherit;
+      font-weight: 500;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background var(--transition), transform var(--transition);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn:hover {
+      background: var(--btn-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      background: var(--btn-active);
+      transform: translateY(0) scale(0.97);
+    }
+
+    /* ───────────────────────────────────────────
+       빈 상태
+    ─────────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 56px 0;
+      color: var(--muted);
+      animation: fadeIn 0.4s ease;
+    }
+
+    .empty-state .icon {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 0.875rem;
+    }
+
+    /* ───────────────────────────────────────────
+       영화 목록 컨테이너 — 리스트 느낌
+    ─────────────────────────────────────────── */
+    #movies-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0; /* 카드 간격 대신 구분선으로 구분 */
+    }
+
+    /* ───────────────────────────────────────────
+       영화 항목 — 카드 느낌 제거, 리스트 아이템
+    ─────────────────────────────────────────── */
+    .movie-card {
+      border: none;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow: hidden;
+      animation: slideUp 0.25s ease;
+      transition: background var(--transition);
+    }
+
+    /* hover 시 배경만 아주 살짝 */
+    .movie-card:hover {
+      background: #fafafa;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* 맨 위 항목 위에도 구분선 */
+    #movies-container .movie-card:first-child {
+      border-top: 1px solid var(--border);
+    }
+
+    /* 페이지 복원 시 애니메이션 생략 */
+    .movie-card.no-animate {
+      animation: none;
+    }
+
+    /* ───────────────────────────────────────────
+       카드 헤더
+    ─────────────────────────────────────────── */
+    .card-header {
+      padding: 18px 4px 14px;
+      border-bottom: none;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .card-header .movie-number {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      min-width: 28px;
+    }
+
+    .card-header .movie-title {
+      font-family: inherit;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      letter-spacing: normal;
+      color: var(--text);
+      flex: 1;
+    }
+
+    /* 삭제 버튼 — 매우 조용하게 */
+    .btn-delete {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      opacity: 0;                      /* 평소엔 숨김 */
+      transition: opacity var(--transition), color var(--transition), background var(--transition);
+      align-self: center;
+    }
+
+    /* 카드에 hover 시에만 X 버튼 표시 */
+    .movie-card:hover .btn-delete {
+      opacity: 1;
+    }
+
+    .btn-delete:hover {
+      background: #f0f0f0;
+      color: #999;
+    }
+
+    .btn-delete:active {
+      background: #e8e8e8;
+    }
+
+    /* 삭제 애니메이션 */
+    @keyframes slideOut {
+      from { opacity: 1; max-height: 600px; }
+      to   { opacity: 0; max-height: 0; margin: 0; padding: 0; }
+    }
+
+    .movie-card.removing {
+      animation: slideOut 0.25s ease forwards;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    /* ───────────────────────────────────────────
+       카드 본문
+    ─────────────────────────────────────────── */
+    .card-body {
+      padding: 0 4px 18px;
+    }
+
+    /* ───────────────────────────────────────────
+       댓글 목록
+    ─────────────────────────────────────────── */
+    .comments-list {
+      list-style: none;
+      margin-bottom: 14px;
+    }
+
+    .comments-list.empty::before {
+      content: "한줄평을 남겨보세요";
+      display: block;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      padding: 2px 0 12px;
+    }
+
+    .comment-item {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+      color: var(--text-sub);
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .comment-item:last-child {
+      border-bottom: none;
+    }
+
+    /* 따옴표 장식 제거 — 더 미니멀하게 */
+    .comment-item::before {
+      content: none;
+    }
+
+    .comment-item span {
+      flex: 1;
+    }
+
+    /* 시간 표시 */
+    .comment-time {
+      font-size: 0.75rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ───────────────────────────────────────────
+       댓글 입력 폼 — 닉네임·비밀번호·한줄평
+    ─────────────────────────────────────────── */
+    .comment-form {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .comment-form .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .comment-form .input-wrap {
+      flex: 1;
+    }
+
+    .comment-form .input-wrap label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .btn-sm {
+      padding: 6px 13px;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    /* ───────────────────────────────────────────
+       댓글 닉네임 표시
+    ─────────────────────────────────────────── */
+    /* .comment-item span { flex: 1 } 보다 구체적으로 닉네임만 내용 너비로 고정 */
+    .comment-item .comment-nick {
+      font-weight: 500;
+      color: var(--text);
+      flex: none;
+      margin-left: 6px;
+    }
+
+    /* ───────────────────────────────────────────
+       댓글 삭제 버튼 (각 댓글 우측)
+    ─────────────────────────────────────────── */
+    .btn-comment-delete {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.7rem;
+      color: var(--muted);
+      padding: 0 2px;
+      opacity: 0;
+      transition: opacity var(--transition), color var(--transition);
+      flex-shrink: 0;
+      line-height: 1;
+      align-self: center;
+    }
+
+    .comment-item:hover .btn-comment-delete {
+      opacity: 1;
+    }
+
+    .btn-comment-delete:hover {
+      color: #999;
+    }
+
+    /* ───────────────────────────────────────────
+       비밀번호 확인 모달
+    ─────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fadeIn 0.15s ease;
+    }
+
+    .modal {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 28px 28px 24px;
+      width: 100%;
+      max-width: 320px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    .modal h3 {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .modal p.modal-sub {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .modal .modal-input {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      padding: 6px 0;
+      font-size: 0.9375rem;
+      font-family: inherit;
+      background: transparent;
+      color: var(--text);
+      outline: none;
+      transition: border-color var(--transition);
+      margin-bottom: 18px;
+    }
+
+    .modal .modal-input:focus {
+      border-bottom-color: var(--border-focus);
+    }
+
+    .modal .modal-input.error {
+      border-bottom-color: #e55;
+    }
+
+    .modal-error {
+      font-size: 0.8rem;
+      color: #e55;
+      margin-top: -12px;
+      margin-bottom: 14px;
+      min-height: 1em;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn-ghost {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.8125rem;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: var(--radius);
+      transition: background var(--transition);
+    }
+
+    .btn-ghost:hover {
+      background: var(--btn-bg);
+    }
+
+    /* 모바일 댓글 삭제 버튼 항상 표시 */
+    @media (max-width: 480px) {
+      .btn-comment-delete {
+        opacity: 1;
+      }
+    }
+
+    /* ───────────────────────────────────────────
+       애니메이션
+    ─────────────────────────────────────────── */
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ───────────────────────────────────────────
+       푸터
+    ─────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 28px 24px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* ───────────────────────────────────────────
+       반응형 — 모바일
+    ─────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      header {
+        padding: 32px 20px 24px;
+      }
+
+      main {
+        padding: 0 16px 80px;
+      }
+
+      .add-movie-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 14px 0 12px;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 10px;
+        text-align: center;
+      }
+
+      .card-header {
+        padding: 16px 0 12px;
+      }
+
+      .card-body {
+        padding: 0 0 16px;
+      }
+
+      /* 모바일에선 X 버튼 항상 표시 (hover 없으므로) */
+      .btn-delete {
+        opacity: 1;
+      }
+
+      .btn-sm {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ─────────────── 헤더 ─────────────── -->
+  <header>
+    <p class="subtitle">영화에 대한 솔직한 한마디를 남겨주세요</p>
+  </header>
+
+  <!-- ─────────────── 메인 콘텐츠 ─────────────── -->
+  <main>
+
+    <!-- 영화 추가 입력 영역 -->
+    <section class="add-movie-section" aria-label="영화 추가">
+      <div class="input-wrap">
+        <label for="movie-title-input">영화 제목</label>
+        <input
+          type="text"
+          id="movie-title-input"
+          class="underline-input"
+          placeholder="예) 인터스텔라, 기생충…"
+          autocomplete="off"
+        />
+      </div>
+      <button type="button" class="btn" id="add-movie-btn">추가</button>
+    </section>
+
+    <!-- 빈 상태 안내 (영화가 없을 때만 표시) -->
+    <div id="empty-state" class="empty-state" role="status">
+      <div class="icon">🎬</div>
+      <p>아직 추가된 영화가 없어요.<br/>위에서 영화 제목을 입력해 보세요!</p>
+    </div>
+
+    <!-- 영화 카드들이 동적으로 삽입될 컨테이너 -->
+    <div id="movies-container" role="list"></div>
+
+  </main>
+
+  <!-- ─────────────── 푸터 ─────────────── -->
+  <footer>
+    © 2026 Filminside Corp. All rights reserved.
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var STORAGE_KEY = 'hanJulPyeong_movies';
+      var HASH_PEPPER = 'hanJulPyeong|comment|v2';
+      var CONTROL_CHARS = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
+
+      var state = {
+        movies: [],
+        movieCount: 0,
+        movieById: Object.create(null)
+      };
+
+      var dom = {
+        movieTitleInput: null,
+        emptyState: null,
+        moviesContainer: null,
+        addSection: null,
+        headerSentinel: null,
+        addMovieBtn: null,
+        modalOverlay: null
+      };
+
+      function rebuildMovieIndex() {
+        var byId = Object.create(null);
+        for (var i = 0; i < state.movies.length; i++) {
+          byId[state.movies[i].id] = state.movies[i];
+        }
+        state.movieById = byId;
+      }
+
+      function getMovie(cardId) {
+        return state.movieById[cardId];
+      }
+
+      var Sanitize = {
+        _strip: function (str) {
+          return String(str).replace(CONTROL_CHARS, '');
+        },
+        _clamp: function (str, max) {
+          if (str.length <= max) return str;
+          return str.slice(0, max);
+        },
+        movieTitle: function (raw) {
+          var s = Sanitize._strip(String(raw || '')).trim();
+          return Sanitize._clamp(s, 60);
+        },
+        nick: function (raw) {
+          var s = Sanitize._strip(String(raw || '')).trim();
+          return Sanitize._clamp(s, 20);
+        },
+        commentText: function (raw) {
+          var s = Sanitize._strip(String(raw || '')).trim();
+          return Sanitize._clamp(s, 100);
+        },
+        password: function (raw) {
+          return Sanitize._clamp(Sanitize._strip(String(raw || '')), 20);
+        },
+        timeStored: function (raw) {
+          var s = Sanitize._strip(String(raw || '')).trim();
+          if (/^\d{1,2}:\d{2}$/.test(s)) return s;
+          return '';
+        },
+        normalizeComment: function (c) {
+          if (typeof c === 'string') {
+            return {
+              nick: '',
+              text: Sanitize.commentText(c),
+              createdAt: null,
+              legacyTime: ''
+            };
+          }
+          var ca = c.createdAt;
+          var createdAt = null;
+          if (typeof ca === 'number' && isFinite(ca)) {
+            createdAt = ca;
+          } else if (typeof ca === 'string' && ca !== '') {
+            var parsed = Date.parse(ca);
+            if (!isNaN(parsed)) createdAt = parsed;
+          }
+          return {
+            nick: Sanitize.nick(c.nick || ''),
+            text: Sanitize.commentText(c.text || ''),
+            createdAt: createdAt,
+            legacyTime: createdAt == null ? Sanitize.timeStored(c.time || '') : ''
+          };
+        }
+      };
+
+      var CommentTime = {
+        formatRelative: function (ms) {
+          var n = Number(ms);
+          if (!isFinite(n)) return '';
+          var now = Date.now();
+          var diffSec = Math.floor((now - n) / 1000);
+          if (diffSec < 0) diffSec = 0;
+          if (diffSec < 60) return '방금';
+          var minutes = Math.floor(diffSec / 60);
+          if (minutes < 60) {
+            return minutes + '분 전';
+          }
+          var hours = Math.floor(minutes / 60);
+          if (hours < 24) {
+            return hours + '시간 전';
+          }
+          var d = new Date(n);
+          var y = d.getFullYear();
+          var mo = String(d.getMonth() + 1).padStart(2, '0');
+          var day = String(d.getDate()).padStart(2, '0');
+          return y + '.' + mo + '.' + day;
+        },
+        displayFromNormalized: function (n) {
+          if (n.createdAt != null) return CommentTime.formatRelative(n.createdAt);
+          return n.legacyTime || '';
+        }
+      };
+
+      var InputLength = {
+        max: {
+          movieTitle: 60,
+          nick: 20,
+          password: 20,
+          comment: 100
+        },
+        enforceOn: function (input, max) {
+          if (!input || typeof max !== 'number') return;
+          input.addEventListener('input', function () {
+            var v = input.value;
+            if (v.length <= max) return;
+            var start = input.selectionStart;
+            input.value = v.slice(0, max);
+            if (input.setSelectionRange) {
+              var pos = Math.min(typeof start === 'number' ? start : max, max);
+              input.setSelectionRange(pos, pos);
+            }
+          });
+        }
+      };
+
+      var Html = {
+        escape: function (str) {
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;')
+            .replace(/\//g, '&#047;');
+        }
+      };
+
+      var Secrets = {
+        syncHashBody: function (plain) {
+          var s = HASH_PEPPER + '\x1f' + String(plain);
+          var parts = [];
+          for (var p = 0; p < 16; p++) {
+            var h = (p * 0x811c9dc5) >>> 0;
+            for (var i = 0; i < s.length; i++) {
+              h ^= s.charCodeAt(i);
+              h = Math.imul(h, 0x01000193) >>> 0;
+            }
+            parts.push(('0000000' + h.toString(16)).slice(-8));
+          }
+          return parts.join('');
+        },
+        bufToHex: function (buf) {
+          var bytes = new Uint8Array(buf);
+          var hex = '';
+          for (var i = 0; i < bytes.length; i++) {
+            hex += ('0' + bytes[i].toString(16)).slice(-2);
+          }
+          return hex;
+        },
+        hashPassword: function (plain) {
+          if (window.crypto && crypto.subtle) {
+            return crypto.subtle
+              .digest('SHA-256', new TextEncoder().encode(plain))
+              .then(function (buf) {
+                return 's256:' + Secrets.bufToHex(buf);
+              });
+          }
+          return Promise.resolve('h1:' + Secrets.syncHashBody(plain));
+        },
+        verifyCommentPassword: function (comment, inputPw) {
+          var stored = comment.pwHash;
+          if (stored && comment.pw) {
+            delete comment.pw;
+          }
+          if (!stored && comment.pw != null) {
+            return Promise.resolve(String(inputPw) === String(comment.pw));
+          }
+          if (!stored) return Promise.resolve(false);
+
+          if (stored.indexOf('s256:') === 0) {
+            var want = stored.slice(5);
+            return Secrets.hashPassword(inputPw).then(function (h) {
+              return typeof h === 'string' && h.indexOf('s256:') === 0 && h.slice(5) === want;
+            });
+          }
+          if (stored.indexOf('h1:') === 0) {
+            var target = stored.slice(3);
+            return Promise.resolve(Secrets.syncHashBody(inputPw) === target);
+          }
+          if (/^[a-f0-9]{64}$/i.test(stored)) {
+            if (!window.crypto || !crypto.subtle) {
+              return Promise.resolve(false);
+            }
+            return crypto.subtle
+              .digest('SHA-256', new TextEncoder().encode(inputPw))
+              .then(function (buf) {
+                return Secrets.bufToHex(buf).toLowerCase() === stored.toLowerCase();
+              });
+          }
+          return Promise.resolve(false);
+        }
+      };
+
+      var Persistence = {
+        save: function () {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              movieCount: state.movieCount,
+              movies: state.movies
+            })
+          );
+        },
+        migratePlainPasswords: function () {
+          var changed = false;
+          for (var mi = 0; mi < state.movies.length; mi++) {
+            var mov = state.movies[mi];
+            if (!mov || !Array.isArray(mov.comments)) continue;
+            for (var ci = 0; ci < mov.comments.length; ci++) {
+              var c = mov.comments[ci];
+              if (!c || typeof c !== 'object') continue;
+              if (c.pwHash && c.pw != null) {
+                delete c.pw;
+                changed = true;
+                continue;
+              }
+              if (!c.pwHash && c.pw != null && String(c.pw) !== '') {
+                c.pwHash = 'h1:' + Secrets.syncHashBody(String(c.pw));
+                delete c.pw;
+                changed = true;
+              }
+            }
+          }
+          if (changed) Persistence.save();
+        },
+        load: function () {
+          try {
+            var raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return false;
+            var payload = JSON.parse(raw);
+            state.movieCount = payload.movieCount || 0;
+            state.movies = payload.movies || [];
+            rebuildMovieIndex();
+            Persistence.migratePlainPasswords();
+            return state.movies.length > 0;
+          } catch (e) {
+            return false;
+          }
+        }
+      };
+
+      var UiFeedback = {
+        flashFieldError: function (inputEl) {
+          inputEl.style.borderBottomColor = '#e55';
+          setTimeout(function () {
+            inputEl.style.borderBottomColor = '';
+          }, 1200);
+        }
+      };
+
+      var CommentListView = {
+        appendRow: function (listEl, nick, text, time, index) {
+          if (!listEl) return;
+          listEl.classList.remove('empty');
+          var li = document.createElement('li');
+          li.className = 'comment-item';
+          if (nick) {
+            var nickSpan = document.createElement('span');
+            nickSpan.className = 'comment-nick';
+            nickSpan.textContent = nick;
+            li.appendChild(nickSpan);
+          }
+          var textSpan = document.createElement('span');
+          textSpan.textContent = text;
+          li.appendChild(textSpan);
+          if (time) {
+            var timeEl = document.createElement('time');
+            timeEl.className = 'comment-time';
+            timeEl.textContent = time;
+            li.appendChild(timeEl);
+          }
+          if (index >= 0) {
+            var delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'btn-comment-delete';
+            delBtn.title = '삭제';
+            delBtn.appendChild(document.createTextNode('\u2715'));
+            li.appendChild(delBtn);
+          }
+          listEl.appendChild(li);
+        },
+        attachDeleteDelegation: function (listEl, cardId) {
+          listEl.addEventListener('click', function (e) {
+            var t = e.target;
+            if (!t || !t.closest) return;
+            var btn = t.closest('.btn-comment-delete');
+            if (!btn || !listEl.contains(btn)) return;
+            var li = btn.closest('.comment-item');
+            if (!li || !listEl.contains(li)) return;
+            var idx = Array.prototype.indexOf.call(listEl.children, li);
+            if (idx >= 0) CommentDeleteModal.open(cardId, idx);
+          });
+        }
+      };
+
+      var MovieCardView = {
+        create: function (num, title, animate) {
+          var cardId = 'movie-' + num;
+          var article = document.createElement('article');
+          article.className = animate ? 'movie-card' : 'movie-card no-animate';
+          article.setAttribute('role', 'listitem');
+          article.id = cardId;
+          article.innerHTML =
+            '<div class="card-header">' +
+            '<h2 class="movie-title">' +
+            Html.escape(title) +
+            '</h2>' +
+            '<button type="button" class="btn-delete" title="삭제">&#x2715;</button>' +
+            '</div>' +
+            '<div class="card-body">' +
+            '<ul class="comments-list empty" id="comments-' +
+            cardId +
+            '"></ul>' +
+            '<div class="comment-form">' +
+            '<div class="input-row">' +
+            '<div class="input-wrap">' +
+            '<label>닉네임</label>' +
+            '<input type="text" id="nick-input-' +
+            cardId +
+            '" class="underline-input" placeholder="닉네임" autocomplete="nickname" />' +
+            '</div>' +
+            '<div class="input-wrap">' +
+            '<label>비밀번호</label>' +
+            '<input type="text" id="pw-input-' +
+            cardId +
+            '" class="underline-input input-mask-password" placeholder="삭제 시 필요" autocomplete="current-password" />' +
+            '</div>' +
+            '</div>' +
+            '<div class="input-row">' +
+            '<div class="input-wrap">' +
+            '<label>한줄평</label>' +
+            '<input type="text" id="comment-input-' +
+            cardId +
+            '" class="underline-input" placeholder="이 영화에 대한 한 마디..." autocomplete="off" />' +
+            '</div>' +
+            '<button type="button" class="btn btn-sm">등록</button>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
+
+          var listEl = article.querySelector('.comments-list');
+          CommentListView.attachDeleteDelegation(listEl, cardId);
+
+          var btnDelete = article.querySelector('.btn-delete');
+          var btnSubmit = article.querySelector('.btn-sm');
+          var nickInput = article.querySelector('#nick-input-' + cardId);
+          var pwInputEl = article.querySelector('#pw-input-' + cardId);
+          var commentField = article.querySelector('#comment-input-' + cardId);
+          InputLength.enforceOn(nickInput, InputLength.max.nick);
+          InputLength.enforceOn(pwInputEl, InputLength.max.password);
+          InputLength.enforceOn(commentField, InputLength.max.comment);
+          btnDelete.addEventListener('click', function () {
+            Movies.remove(cardId);
+          });
+          btnSubmit.addEventListener('click', function () {
+            Comments.submit(cardId);
+          });
+          let isComposing = false;
+          commentField.addEventListener('compositionstart', function () {
+            isComposing = true;
+          });
+          commentField.addEventListener('compositionend', function () {
+            isComposing = false;
+          });
+          commentField.addEventListener('keydown', function (e) {
+            if (e.key === 'Process') return;
+            if (e.key !== 'Enter') return;
+            if (isComposing) return;
+            if (e.isComposing) return;
+            e.preventDefault();
+            Comments.submit(cardId);
+          });
+          return article;
+        }
+      };
+
+      var Comments = {
+        submit: function (cardId) {
+          var root = document.getElementById(cardId);
+          if (!root) return;
+          var nickInput = root.querySelector('#nick-input-' + cardId);
+          var pwInput = root.querySelector('#pw-input-' + cardId);
+          var commentInput = root.querySelector('#comment-input-' + cardId);
+          var commentsList = root.querySelector('.comments-list');
+          var nick = Sanitize.nick(nickInput.value);
+          var pw = Sanitize.password(pwInput.value);
+          var text = Sanitize.commentText(commentInput.value);
+
+          if (!nick) {
+            UiFeedback.flashFieldError(nickInput);
+            return;
+          }
+          if (!pw) {
+            UiFeedback.flashFieldError(pwInput);
+            return;
+          }
+          if (!text) {
+            UiFeedback.flashFieldError(commentInput);
+            return;
+          }
+
+          var movie = getMovie(cardId);
+          if (!movie) return;
+
+          var createdAt = Date.now();
+          Secrets.hashPassword(pw)
+            .then(function (pwHash) {
+              movie.comments.push({
+                nick: nick,
+                pwHash: pwHash,
+                text: text,
+                createdAt: createdAt
+              });
+              Persistence.save();
+              CommentListView.appendRow(
+                commentsList,
+                nick,
+                text,
+                CommentTime.formatRelative(createdAt),
+                movie.comments.length - 1
+              );
+              commentInput.value = '';
+              pwInput.value = '';
+            })
+            .catch(function () {
+              UiFeedback.flashFieldError(pwInput);
+            });
+        }
+      };
+
+      var CommentDeleteModal = {
+        open: function (cardId, index) {
+          if (dom.modalOverlay) return;
+          var overlay = document.createElement('div');
+          overlay.className = 'modal-overlay';
+          overlay.innerHTML =
+            '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-del-title">' +
+            '<h3 id="modal-del-title">댓글 삭제</h3>' +
+            '<p class="modal-sub">작성 시 입력한 비밀번호를 입력하세요</p>' +
+            '<input type="text" class="modal-input input-mask-password" id="modal-pw-input" placeholder="비밀번호" autocomplete="off" />' +
+            '<p class="modal-error" id="modal-error" role="alert"></p>' +
+            '<div class="modal-actions">' +
+            '<button type="button" class="btn-ghost" id="modal-cancel">취소</button>' +
+            '<button type="button" class="btn btn-sm" id="modal-confirm">삭제</button>' +
+            '</div>' +
+            '</div>';
+          document.body.appendChild(overlay);
+          dom.modalOverlay = overlay;
+
+          var pwInput = overlay.querySelector('#modal-pw-input');
+          var errorMsg = overlay.querySelector('#modal-error');
+          var cancelBtn = overlay.querySelector('#modal-cancel');
+          var confirmBtn = overlay.querySelector('#modal-confirm');
+          InputLength.enforceOn(pwInput, InputLength.max.password);
+          setTimeout(function () {
+            pwInput.focus();
+          }, 50);
+
+          var close = function () {
+            pwInput.value = '';
+            overlay.remove();
+            dom.modalOverlay = null;
+          };
+          cancelBtn.addEventListener('click', close);
+          overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) close();
+          });
+
+          var doDelete = function () {
+            var movie = getMovie(cardId);
+            if (!movie) {
+              close();
+              return;
+            }
+            var comment = movie.comments[index];
+            if (!comment) {
+              close();
+              return;
+            }
+            var typed = Sanitize.password(pwInput.value);
+            Secrets.verifyCommentPassword(comment, typed)
+              .then(function (ok) {
+                if (!ok) {
+                  pwInput.classList.add('error');
+                  errorMsg.textContent = '비밀번호가 맞지 않아요';
+                  pwInput.value = '';
+                  pwInput.focus();
+                  setTimeout(function () {
+                    pwInput.classList.remove('error');
+                  }, 1500);
+                  return;
+                }
+                var listEl = document.getElementById('comments-' + cardId);
+                var node = listEl && listEl.children[index];
+                if (node) node.remove();
+                movie.comments.splice(index, 1);
+                Persistence.save();
+                if (listEl && movie.comments.length === 0) listEl.classList.add('empty');
+                close();
+              })
+              .catch(function () {
+                pwInput.classList.add('error');
+                errorMsg.textContent = '다시 시도해 주세요';
+                pwInput.focus();
+                setTimeout(function () {
+                  pwInput.classList.remove('error');
+                }, 1500);
+              });
+          };
+          confirmBtn.addEventListener('click', doDelete);
+          pwInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') doDelete();
+            if (e.key === 'Escape') close();
+          });
+        }
+      };
+
+      var Movies = {
+        addFromForm: function () {
+          var input = dom.movieTitleInput;
+          var title = Sanitize.movieTitle(input.value);
+          if (!title) {
+            UiFeedback.flashFieldError(input);
+            return;
+          }
+          state.movieCount++;
+          var id = 'movie-' + state.movieCount;
+          var movie = {
+            id: id,
+            num: state.movieCount,
+            title: title,
+            comments: []
+          };
+          state.movies.push(movie);
+          state.movieById[id] = movie;
+          Persistence.save();
+          dom.emptyState.style.display = 'none';
+          dom.moviesContainer.insertBefore(
+            MovieCardView.create(state.movieCount, title, true),
+            dom.moviesContainer.firstChild
+          );
+          input.value = '';
+        },
+        remove: function (cardId) {
+          var card = document.getElementById(cardId);
+          if (!card) return;
+          card.classList.add('removing');
+          setTimeout(function () {
+            card.remove();
+            var m = getMovie(cardId);
+            var mi = m ? state.movies.indexOf(m) : -1;
+            if (mi >= 0) state.movies.splice(mi, 1);
+            delete state.movieById[cardId];
+            Persistence.save();
+            if (state.movies.length === 0) dom.emptyState.style.display = '';
+          }, 250);
+        },
+        restoreFromStorage: function () {
+          if (!Persistence.load()) return;
+          dom.emptyState.style.display = 'none';
+          var container = dom.moviesContainer;
+          for (var i = state.movies.length - 1; i >= 0; i--) {
+            var movie = state.movies[i];
+            var card = MovieCardView.create(movie.num, movie.title, false);
+            container.insertBefore(card, container.firstChild);
+            var listEl = card.querySelector('.comments-list');
+            movie.comments.forEach(function (c, idx) {
+              var n = Sanitize.normalizeComment(c);
+              CommentListView.appendRow(
+                listEl,
+                n.nick,
+                n.text,
+                CommentTime.displayFromNormalized(n),
+                idx
+              );
+            });
+          }
+        }
+      };
+
+      var AppShell = {
+        cacheDomRefs: function () {
+          dom.movieTitleInput = document.getElementById('movie-title-input');
+          dom.emptyState = document.getElementById('empty-state');
+          dom.moviesContainer = document.getElementById('movies-container');
+          dom.addSection = document.querySelector('.add-movie-section');
+          dom.headerSentinel = document.querySelector('header');
+          dom.addMovieBtn = document.getElementById('add-movie-btn');
+        },
+        bindStickyAddSection: function () {
+          if (!dom.addSection || !dom.headerSentinel) return;
+          new IntersectionObserver(function (entries) {
+            dom.addSection.classList.toggle('scrolled', !entries[0].isIntersecting);
+          }, { threshold: 0 }).observe(dom.headerSentinel);
+        },
+        start: function () {
+          AppShell.cacheDomRefs();
+          InputLength.enforceOn(dom.movieTitleInput, InputLength.max.movieTitle);
+          if (dom.addMovieBtn) {
+            dom.addMovieBtn.addEventListener('click', Movies.addFromForm);
+          }
+          dom.movieTitleInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.isComposing) {
+              e.preventDefault();
+              Movies.addFromForm();
+            }
+          });
+          Movies.restoreFromStorage();
+          AppShell.bindStickyAddSection();
+        }
+      };
+
+      document.addEventListener('DOMContentLoaded', AppShell.start);
+    })();
+  </script>
+
+</body>
+</html>
